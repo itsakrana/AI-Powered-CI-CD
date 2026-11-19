@@ -66,15 +66,22 @@ Each stage updates a shared `status.json` file that is passed to the next job as
 
 > Scanners report a `warning` state when they find issues. This is the pipeline working as designed: findings are surfaced on every run without blocking report delivery.
 
-## 📸 Screenshots
+📸 Screenshots
+AI DevOps Dashboard
 
-| Dashboard | Security Report |
-|-----------|-----------------|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Security Report](docs/screenshots/security-report.png) |
+A single page showing deployment status, risk score, test results, coverage and the status of every pipeline stage, with an AI-generated summary.
 
-| Dependency Report | AI Insights |
-|-------------------|-------------|
-| ![Dependency Report](docs/screenshots/dependency-report.png) | ![AI Insights](docs/screenshots/ai-insights.png) |
+AI DevOps Dashboard
+
+Test and Lint Reports
+<table> <tr> <td align="center"><b>Test Report (pytest)</b></td> <td align="center"><b>Lint Report (Flake8)</b></td> </tr> <tr> <td><img src="docs/screenshot/Screenshot%202026-11-19%20153901.png" alt="Test Report"></td> <td><img src="docs/screenshot/Screenshot%202026-11-19%20153921.png" alt="Lint Report"></td> </tr> </table>
+Security and Dependency Reports
+<table> <tr> <td align="center"><b>Security Report (Bandit)</b></td> <td align="center"><b>Dependency Report (pip-audit)</b></td> </tr> <tr> <td><img src="docs/screenshot/Screenshot%202026-11-19%20153947.png" alt="Security Report"></td> <td><img src="docs/screenshot/Screenshot%202026-11-19%20154032.png" alt="Dependency Report"></td> </tr> </table>
+AI-Generated Insights
+
+Gemini reviews the combined results and writes a pipeline health summary with recommendations for coverage, code quality, security and dependencies.
+
+AI-Generated Insights
 
 ## 🛠️ Tech Stack
 
