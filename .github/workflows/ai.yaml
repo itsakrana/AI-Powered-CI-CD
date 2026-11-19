@@ -277,6 +277,7 @@ jobs:
   ai-analysis:
     runs-on: ubuntu-latest
     needs: dependency-scan
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -326,12 +327,43 @@ jobs:
               }
             }' > gemini-request.json
 
-          curl --fail-with-body --silent --show-error \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent" \
-            -H "x-goog-api-key: ${GEMINI_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d @gemini-request.json \
-            -o gemini-response.json
+          MODELS="gemini-3.5-flash gemini-3.5-flash-lite gemini-3.8-flash"
+          SUCCESS=0
+
+          for MODEL in $MODELS; do
+            for ATTEMPT in 1 2 3 4; do
+              HTTP_CODE=$(curl --silent --show-error \
+                --output gemini-response.json \
+                --write-out "%{http_code}" \
+                "https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent" \
+                -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+                -H "Content-Type: application/json" \
+                -d @gemini-request.json || true)
+
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "Gemini responded successfully using ${MODEL}"
+                SUCCESS=1
+                break 2
+              fi
+
+              echo "::warning::${MODEL} attempt ${ATTEMPT} returned HTTP ${HTTP_CODE}"
+
+              case "$HTTP_CODE" in
+                000|429|500|502|503|504)
+                  sleep $((ATTEMPT * 15))
+                  ;;
+                *)
+                  break
+                  ;;
+              esac
+            done
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "::error::All Gemini models failed. Last response:"
+            cat gemini-response.json || true
+            exit 1
+          fi
 
       - name: Extract Gemini AI Summary
         run: |
