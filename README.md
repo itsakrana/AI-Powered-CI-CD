@@ -1,247 +1,197 @@
-# 🚀 FastAPI Project – Push to GitHub (Step-by-Step Guide)
+# 🚀 AI-Powered CI/CD Pipeline
 
-This guide explains how to push a local FastAPI project to GitHub from scratch.
+> An end-to-end **DevSecOps** pipeline built on GitHub Actions that tests, scans, analyzes and publishes a live engineering dashboard on every run, with AI-generated insights powered by Google Gemini.
+
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222222?logo=github&logoColor=white)
+![Coverage Gate](https://img.shields.io/badge/Coverage%20Gate-80%25-brightgreen)
+
+**🌐 Live Dashboard:** [itsakrana.github.io/AI-Powered-CI-CD](https://itsakrana.github.io/AI-Powered-CI-CD/)
 
 ---
 
-## 📁 Prerequisites
+## 📖 Overview
 
-Make sure you have:
+Most CI/CD pipelines tell you that a build failed. This project explains **why it matters**.
 
-* Git installed → [https://git-scm.com/](https://git-scm.com/)
-* GitHub account → GitHub
-* Your project folder ready (e.g., `fastapi_project`)
+On every run, the pipeline validates code quality, scans for security risks and vulnerable dependencies, then sends the combined results to **Google Gemini**, which produces a plain-language health summary with prioritized DevOps recommendations. Everything is consolidated into a single **AI DevOps Dashboard** published automatically to GitHub Pages, so any team member can understand the health, risk and security posture of a build in seconds.
 
----
+## ✨ Key Features
 
-## 📂 Step 1: Navigate to Project Folder
+- ✅ **Automated testing** with `pytest` and an enforced **80% code-coverage quality gate**
+- 🧹 **Static code analysis** with `Flake8`
+- 🔐 **Security scanning (SAST)** with `Bandit` to detect issues such as hardcoded credentials
+- 📦 **Dependency vulnerability scanning (SCA)** with `pip-audit` against known CVEs
+- 🤖 **AI-driven analysis** with Google Gemini: pipeline health summary, risk observations and actionable recommendations
+- 📊 **Live AI DevOps Dashboard** showing deployment status, risk score, test results, coverage and links to every detailed report
+- 🛡️ **Resilient AI integration** with retry and backoff plus multi-model fallback, so an API outage never blocks report delivery
+- 🔗 **Shared status artifact** passed through every job as a single source of truth
 
-Open terminal / PowerShell:
+## 🏗️ Pipeline Architecture
+
+```mermaid
+flowchart LR
+    A([Manual Trigger<br/>workflow_dispatch]) --> B[1. Test<br/>pytest + coverage]
+    B --> C[2. Lint<br/>Flake8]
+    C --> D[3. Security<br/>Bandit]
+    D --> E[4. Dependency Scan<br/>pip-audit]
+    E --> F[5. AI Analysis<br/>Google Gemini]
+    F --> G[6. Deploy Report<br/>GitHub Pages]
+    G --> H([Live Dashboard])
+```
+
+| Stage | Job | Tool | What it does |
+|-------|-----|------|--------------|
+| 1 | `test` | pytest, pytest-cov | Runs the test suite and fails the build if coverage is below 80% |
+| 2 | `lint` | Flake8 | Checks code style and quality, generates an HTML report |
+| 3 | `security` | Bandit | Scans application code for common security issues |
+| 4 | `dependency-scan` | pip-audit | Audits every dependency for known vulnerabilities and builds a visual report |
+| 5 | `ai-analysis` | Gemini API | Analyzes the combined results and writes an AI summary with recommendations |
+| 6 | `deploy-report` | GitHub Pages | Packages all reports and publishes the dashboard |
+
+Each stage updates a shared `status.json` file that is passed to the next job as an artifact:
+
+```json
+{
+  "tests": "passed",
+  "coverage": 85.0,
+  "lint": "warning",
+  "security": "warning",
+  "dependency": "passed"
+}
+```
+
+> Scanners report a `warning` state when they find issues. This is the pipeline working as designed: findings are surfaced on every run without blocking report delivery.
+
+## 📸 Screenshots
+
+| Dashboard | Security Report |
+|-----------|-----------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Security Report](docs/screenshots/security-report.png) |
+
+| Dependency Report | AI Insights |
+|-------------------|-------------|
+| ![Dependency Report](docs/screenshots/dependency-report.png) | ![AI Insights](docs/screenshots/ai-insights.png) |
+
+## 🛠️ Tech Stack
+
+| Category | Technologies |
+|----------|--------------|
+| CI/CD | GitHub Actions, GitHub Pages |
+| Language and framework | Python 3.11, FastAPI |
+| Testing | pytest, pytest-cov, pytest-html |
+| Code quality | Flake8, flake8-html |
+| Security | Bandit (SAST), pip-audit (SCA) |
+| AI | Google Gemini API |
+| Tooling | YAML, jq, curl |
+
+## 📁 Project Structure
+
+```
+.
+├── .github/
+│   └── workflows/
+│       └── <workflow>.yml     # AI CI/CD pipeline definition
+├── app/                       # FastAPI application
+├── reports/
+│   └── index.html             # AI DevOps Dashboard (home page)
+├── requirements.txt
+└── README.md
+```
+
+## ⚙️ Getting Started
+
+### Prerequisites
+
+- A GitHub account and a fork or clone of this repository
+- A free [Google Gemini API key](https://aistudio.google.com/apikey)
+
+### 1. Add the Gemini API key
+
+In your repository, go to **Settings → Secrets and variables → Actions → New repository secret** and add:
+
+| Name | Value |
+|------|-------|
+| `GEMINI_API_KEY` | Your Gemini API key |
+
+### 2. Run the pipeline
+
+1. Open the **Actions** tab
+2. Select **AI CI/CD Pipeline**
+3. Click **Run workflow**
+
+### 3. Enable GitHub Pages
+
+After the first successful run, go to **Settings → Pages** and set:
+
+- **Source:** Deploy from a branch
+- **Branch:** `gh-pages` / `(root)`
+
+Your dashboard will be available at:
+
+```
+https://<your-username>.github.io/<repository-name>/
+```
+
+## 📊 Reports Published
+
+| Report | Path |
+|--------|------|
+| Dashboard (home) | `/` |
+| Test and coverage report | `/test-report/report.html` |
+| Lint report | `/lint-report/flake8-report/index.html` |
+| Security report | `/security-report/bandit-report.html` |
+| Dependency report | `/dependency-report/dependency-report.html` |
+| AI insights | `/ai-report/ai-report.txt` |
+| Raw status data | `/status.json` |
+
+## 🧪 Run Checks Locally
 
 ```bash
-cd path/to/your-project
+# Install dependencies
+pip install -r requirements.txt
+pip install pytest pytest-cov pytest-html flake8 bandit pip-audit
+
+# Tests with coverage gate
+PYTHONPATH=. pytest --cov=app --cov-fail-under=80
+
+# Lint
+flake8 . --max-line-length=120
+
+# Security scan
+bandit -r app/
+
+# Dependency audit
+pip-audit -r requirements.txt
 ```
 
-Example:
+## 🔧 Configuration
 
-```bash
-cd fastapi_project
-```
+| What | Where | Notes |
+|------|-------|-------|
+| Coverage threshold | `--cov-fail-under=80` in the `test` job | Raise or lower to match your standards |
+| Lint line length | `--max-line-length=120` in the `lint` job | Adjust to your style guide |
+| Gemini models | `MODELS` variable in the `ai-analysis` job | Tried in order, with retries on 429 and 5xx errors. Update when Google retires a model |
+| AI step blocking | `continue-on-error: true` on `ai-analysis` | Remove it to make the whole pipeline fail when the AI step fails |
 
----
+## 🛣️ Roadmap
 
-## 🔧 Step 2: Initialize Git Repository
+- [ ] Trigger on push and pull request events
+- [ ] Docker image build and container vulnerability scanning
+- [ ] Deployment to a cloud environment (AWS)
+- [ ] Slack or email notifications with the AI summary
+- [ ] Trend charts for coverage and risk score over time
 
-```bash
-git init
-```
+## 👨‍💻 Author
 
----
+**Ankit Rana**
+DevOps and Cloud Engineer
 
-## 📦 Step 3: Add Files to Git
-
-```bash
-git add .
-```
-
----
-
-## 📝 Step 4: Commit Your Code
-
-```bash
-git commit -m "Initial commit"
-```
+[![GitHub](https://img.shields.io/badge/GitHub-itsakrana-181717?logo=github&logoColor=white)](https://github.com/itsakrana)
 
 ---
 
-## 🌐 Step 5: Create Repository on GitHub
-
-1. Go to GitHub
-2. Click **New Repository**
-3. Enter repository name (e.g., `fastapi-app`)
-4. Click **Create Repository**
-
-⚠️ Important:
-
-* Do **NOT** select "Initialize with README"
-
----
-
-## 🔗 Step 6: Add Remote Repository
-
-Copy your GitHub repo URL and run:
-
-```bash
-git remote add origin https://github.com/<username>/<repo-name>.git
-```
-
-Example:
-
-```bash
-git remote add origin https://github.com/shubhamagrawal17/fastapi-app.git
-```
-
----
-
-## 🔄 Step 7: Rename Branch to Main
-
-```bash
-git branch -M main
-```
-
----
-
-## 🚀 Step 8: Push Code to GitHub
-
-```bash
-git push -u origin main
-```
-
----
-
-## ✅ Step 9: Verify
-
-* Open your repository on GitHub
-* You should see your project files uploaded 🎉
-
----
-
-## ⚠️ Common Errors & Fixes
-
-### ❌ Error: `src refspec main does not match any`
-
-✔️ Fix:
-
-```bash
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git push -u origin main
-```
-
----
-
-# 🔐 Goal
-
-Let GitHub Actions authenticate to Azure **without passwords** and push images to your **Azure Container Registry (ACR)**.
-
----
-
-# 🧭 1) Create App Registration (Service Principal)
-
-1. Go to **Azure Portal → Azure Active Directory**
-2. Open **App registrations → New registration**
-3. Name: `github-actions-acr`
-4. Click **Register**
-
-👉 After creation, copy:
-
-* **Application (client) ID**
-* **Directory (tenant) ID**
-
----
-
-# 🔗 2) Add Federated Credential (OIDC)
-
-1. Open your new App Registration
-2. Go to **Certificates & secrets → Federated credentials**
-3. Click **Add credential**
-4. Choose **GitHub Actions deploying Azure resources**
-5. Fill:
-
-   * **Organization** → your GitHub username/org
-   * **Repository** → your repo name
-   * **Branch** → `main` (or your branch)
-6. Click **Add**
-
-👉 This links GitHub → Azure securely (no secrets)
-
----
-
-# 🛡️ 3) Grant ACR Push Permission
-
-1. Go to your **Container Registry**
-2. Open **Access control (IAM)**
-3. Click **Add role assignment**
-4. Role: **AcrPush**
-5. Assign access to: **User, group, or service principal**
-6. Select your app: `github-actions-acr`
-7. Save
-
----
-
-# 🔑 4) Add GitHub Secrets (only 3, no passwords)
-
-In your GitHub repo → **Settings → Secrets → Actions**
-
-Add:
-
-```text
-AZURE_CLIENT_ID
-AZURE_TENANT_ID
-AZURE_SUBSCRIPTION_ID
-```
-
-👉 Values come from:
-
-* App Registration (client + tenant)
-* Azure subscription page (subscription ID)
-
----
-
-# 🚀 5) Use in GitHub Actions
-
-```yaml
-- name: Azure Login (OIDC)
-  uses: azure/login@v2
-  with:
-    client-id: ${{ secrets.AZURE_CLIENT_ID }}
-    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-- name: Login to ACR
-  run: az acr login --name <ACR_NAME>
-
-- name: Build Image
-  run: docker build -t <ACR_NAME>.azurecr.io/fastapi-app:${{ github.sha }} .
-
-- name: Push Image
-  run: docker push <ACR_NAME>.azurecr.io/fastapi-app:${{ github.sha }}
-```
-
----
-
-# 💡 Example
-
-If your registry is:
-
-```text
-myacr123.azurecr.io
-```
-
-Then:
-
-```bash
-docker build -t myacr123.azurecr.io/fastapi-app:latest .
-docker push myacr123.azurecr.io/fastapi-app:latest
-```
-
----
-
-# ⚠️ Common mistakes
-
-* Using wrong repo/branch in federated credential
-* Forgetting **AcrPush role**
-* Using `myacr123` instead of `myacr123.azurecr.io`
-* Not granting permission to correct subscription
-
----
-
-# 💯 Final Result
-
-You now have:
-
-* ❌ No passwords stored
-* ✅ Secure OIDC authentication
-* ✅ CI/CD pushing images to ACR
-
+⭐ If you found this project useful, consider giving it a star!
