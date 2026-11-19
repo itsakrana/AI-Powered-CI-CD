@@ -273,80 +273,101 @@ jobs:
             status.json
             dependency-report.html
 
+  
   ai-analysis:
     runs-on: ubuntu-latest
     needs: dependency-scan
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - name: Download Dependency Report
+        uses: actions/download-artifact@v4
         with:
           name: dependency-report
 
       - name: Prepare AI Input
         run: cat status.json > ai-input.txt
 
-      - name: Call AI API (FIXED)
+      - name: Generate AI Insights with Gemini
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          INPUT=$(cat ai-input.txt)
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY secret is missing"
+            exit 1
+          fi
 
-          JSON_PAYLOAD=$(jq -n \
-            --arg text "You are a senior DevOps engineer. Analyze this CI/CD pipeline result and suggest improvements:\n$INPUT" \
+          REPORT="$(cat ai-input.txt)"
+
+          jq -n --arg report "$REPORT" \
             '{
-              model: "gpt-4.1",
-              input: [
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "input_text",
-                      text: $text
-                    }
-                  ]
-                }
-              ]
-            }')
+              contents: [{
+                role: "user",
+                parts: [{
+                  text: ("You are a senior DevOps engineer and CI/CD specialist.
 
-          curl https://api.openai.com/v1/responses \
-            -s \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
+          Analyze these pipeline results:
+          " + $report + "
+
+          Provide:
+          1. Pipeline health summary
+          2. Test coverage analysis
+          3. Code quality observations
+          4. Security recommendations
+          5. Dependency vulnerability recommendations
+          6. Actionable DevOps improvements
+
+          Keep the report professional and beginner-friendly.")
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.3
+              }
+            }' > gemini-request.json
+
+          curl --fail-with-body --silent --show-error \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+            -H "x-goog-api-key: ${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD" \
-            > ai-response.json
+            -d @gemini-request.json \
+            -o gemini-response.json
 
-      - name: Debug AI Response
-        run: cat ai-response.json
-
-      - name: Extract AI Summary (Robust)
+      - name: Extract Gemini AI Summary
         run: |
-          python <<EOF
+          python <<'PY'
           import json
+          import sys
 
-          data = json.load(open("ai-response.json"))
-          text = ""
+          with open("gemini-response.json") as f:
+              data = json.load(f)
 
-          for item in data.get("output", []):
-              for content in item.get("content", []):
-                  if content.get("type") == "output_text":
-                      text += content.get("text", "") + "\\n"
+          candidates = data.get("candidates", [])
 
-          if not text:
-              text = data.get("output_text", "")
+          parts = (
+              candidates[0].get("content", {}).get("parts", [])
+              if candidates else []
+          )
 
-          if not text:
-              text = json.dumps(data, indent=2)
+          result = "\n".join(
+              part.get("text", "")
+              for part in parts
+              if part.get("text")
+          )
+
+          if not result:
+              print(json.dumps(data, indent=2), file=sys.stderr)
+              raise SystemExit("Gemini returned no text response")
 
           with open("ai-report.txt", "w") as f:
-              f.write(text)
+              f.write(result)
 
-          print(text)
-          EOF
+          print(result)
+          PY
 
-      - name: Show AI Summary in UI
+      - name: Show AI Summary in GitHub Actions
         run: |
-          echo "## 🤖 AI DevOps Insights" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Gemini AI DevOps Insights" >> $GITHUB_STEP_SUMMARY
           cat ai-report.txt >> $GITHUB_STEP_SUMMARY
 
       - name: Upload AI Report
